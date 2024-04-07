@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 
+import asyncio
+import codecs
+import os
+import subprocess
+
+from dotenv import load_dotenv
 from twitchAPI.twitch import Twitch
 from twitchAPI.oauth import UserAuthenticator
 from twitchAPI.type import AuthScope, ChatEvent
 from twitchAPI.chat import Chat, EventData, ChatMessage, ChatSub, ChatCommand
-import asyncio
-from dotenv import load_dotenv
-import os
 
 load_dotenv()
 
@@ -14,6 +17,7 @@ TWITCH_APP_ID     = os.getenv("TWITCH_APP_ID")
 TWITCH_APP_SECRET = os.getenv("TWITCH_APP_SECRET")
 TWITCH_USER_SCOPE = [AuthScope.CHAT_READ, AuthScope.CHAT_EDIT, AuthScope.WHISPERS_READ]
 TARGET_CHANNEL    = 'syntax976'
+ALLOWED_USERS     = ['billweiss']
 
 # this will be called when the event READY is triggered, which will be on bot start
 async def on_ready(ready_event: EventData):
@@ -34,11 +38,39 @@ async def on_sub(sub: ChatSub):
           f'  Message: {sub.sub_message}')
 
 # this will be called whenever the !reply command is issued
-async def test_command(cmd: ChatCommand):
-    if len(cmd.parameter) == 0:
-        await cmd.reply('you did not tell me what to reply with')
+async def reply_command(cmd: ChatCommand):
+    print(f'in {cmd.room.name}: {cmd.user.name} used {cmd.name}')
+    if cmd.user.name not in ALLOWED_USERS:
+        print(f'in {cmd.room.name}: {cmd.user.name} sent a !reply but isnt in the list')
     else:
-        await cmd.reply(f'{cmd.user.name}: {cmd.parameter}')
+        if len(cmd.parameter) == 0:
+            print(f'in {cmd.room.name}: {cmd.user.name} sent !reply without params')
+            await cmd.reply('you did not tell me what to reply with')
+        else:
+            print(f'in {cmd.room.name}: {cmd.user.name} used reply with: {cmd.parameter}')
+            await cmd.reply(f'{cmd.user.name}: {cmd.parameter}')
+
+async def asdf_command(cmd: ChatCommand):
+    print(f'in {cmd.room.name}: {cmd.user.name} used {cmd.name}')
+    if cmd.user.name not in ALLOWED_USERS:
+        print(f'in {cmd.room.name}: {cmd.user.name} sent a !{cmd.name} but isnt in the list')
+    else:
+        if len(cmd.parameter) == 0:
+            print(f'in {cmd.room.name}: {cmd.user.name} sent !{cmd.name} without params')
+            await cmd.reply('you did not tell me what to {cmd.name} with')
+        else:
+            print(f'in {cmd.room.name}: {cmd.user.name} used {cmd.name} with: {cmd.parameter}')
+            response = subprocess.run(
+                                      ['/opt/homebrew/bin/cowsay', '--', cmd.parameter],
+                                      capture_output=True
+                                      ).stdout
+            response = codecs.decode(response, 'utf-8')
+            await cmd.reply(f'{cmd.user.name}: {response}')
+
+COMMANDS = {
+        'reply': reply_command,
+        'asdf': asdf_command,
+        }
 
 # this is where we set up the bot
 async def run():
@@ -62,7 +94,8 @@ async def run():
     # there are more events, you can view them all in this documentation
 
     # you can directly register commands and their handlers, this will register the !reply command
-    chat.register_command('reply', test_command)
+    for command in COMMANDS.items():
+        chat.register_command(command[0], command[1])
 
 
     # we are done with our setup, lets start this bot up!
