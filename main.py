@@ -33,22 +33,19 @@ async def on_message(msg: ChatMessage):
 
 # this will be called whenever someone subscribes to a channel
 async def on_sub(sub: ChatSub):
-    print(f'New subscription in {sub.room.name}:\\n'
-          f'  Type: {sub.sub_plan}\\n'
-          f'  Message: {sub.sub_message}')
+    print(f'New subscription in {sub.room.name}: '
+          f'Type: {sub.sub_plan} '
+          f'Message: {sub.sub_message}')
 
 # this will be called whenever the !reply command is issued
 async def reply_command(cmd: ChatCommand):
     print(f'in {cmd.room.name}: {cmd.user.name} used {cmd.name}')
-    if cmd.user.name not in ALLOWED_USERS:
-        print(f'in {cmd.room.name}: {cmd.user.name} sent a !reply but isnt in the list')
+    if len(cmd.parameter) == 0:
+        print(f'in {cmd.room.name}: {cmd.user.name} sent !reply without params')
+        await cmd.reply('you did not tell me what to reply with')
     else:
-        if len(cmd.parameter) == 0:
-            print(f'in {cmd.room.name}: {cmd.user.name} sent !reply without params')
-            await cmd.reply('you did not tell me what to reply with')
-        else:
-            print(f'in {cmd.room.name}: {cmd.user.name} used reply with: {cmd.parameter}')
-            await cmd.reply(f'{cmd.user.name}: {cmd.parameter}')
+        print(f'in {cmd.room.name}: {cmd.user.name} used reply with: {cmd.parameter}')
+        await cmd.reply(f'{cmd.user.name}: {cmd.parameter}')
 
 async def asdf_command(cmd: ChatCommand):
     print(f'in {cmd.room.name}: {cmd.user.name} used {cmd.name}')
