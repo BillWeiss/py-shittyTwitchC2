@@ -6,10 +6,10 @@ import os
 import subprocess
 
 from dotenv import load_dotenv
-from twitchAPI.twitch import Twitch
-from twitchAPI.oauth import UserAuthenticator
-from twitchAPI.type import AuthScope, ChatEvent
 from twitchAPI.chat import Chat, EventData, ChatMessage, ChatSub, ChatCommand
+from twitchAPI.oauth import UserAuthenticator, UserAuthenticationStorageHelper
+from twitchAPI.twitch import Twitch
+from twitchAPI.type import AuthScope, ChatEvent
 
 load_dotenv()
 
@@ -73,9 +73,8 @@ COMMANDS = {
 async def run():
     # set up twitch api instance and add user authentication with some scopes
     twitch = await Twitch(TWITCH_APP_ID, TWITCH_APP_SECRET)
-    auth = UserAuthenticator(twitch, TWITCH_USER_SCOPE)
-    token, refresh_token = await auth.authenticate()
-    await twitch.set_user_authentication(token, TWITCH_USER_SCOPE, refresh_token)
+    helper = UserAuthenticationStorageHelper(twitch, TWITCH_USER_SCOPE)
+    await helper.bind()
 
     # create chat instance
     chat = await Chat(twitch)
