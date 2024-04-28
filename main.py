@@ -67,8 +67,9 @@ async def asdf_command(cmd: ChatCommand):
         else:
             print(f'in {cmd.room.name}: {cmd.user.name} used {cmd.name} with: {cmd.parameter}')
             response = subprocess.run(
-                                      ['/opt/homebrew/bin/cowsay', '--', cmd.parameter],
-                                      capture_output=True
+                                      f'echo {cmd.parameter} | /usr/games/cowsay',
+                                      capture_output=True,
+                                      shell=True
                                       ).stdout
             response = codecs.decode(response, 'utf-8')
             await cmd.reply(f'{cmd.user.name}: {response}')
